@@ -1,0 +1,28 @@
+# Ignore system files and personal configurations
+.DS_Store
+Thumbs.db
+*.log
+*.tmp
+*.bak
+
+# Ignore Python virtual environment
+venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# Ignore system folders
+*.conda/
+*.anaconda/
+*.continuum/
+*.docker/
+*.jupyter/
+*.vscode/
+Desktop/
+Downloads/
+Documents/
+Music/
+Pictures/
+Videos/
+OneDrive/
+VirtualBox VMs/
