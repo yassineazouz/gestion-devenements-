@@ -1,0 +1,75 @@
+  /* eventList.css */
+.event-list {
+    padding: 1rem;
+  }
+  
+  .day-block {
+    margin-bottom: 1.5rem;
+  }
+  
+  .day-title {
+    font-weight: bold;
+    font-size: 1.2rem;
+    margin-bottom: 0.5rem;
+  }
+  
+  .event {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.5rem;
+  }
+  
+  .dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-right: 10px;
+    flex-shrink: 0;
+  }
+  
+  .dot.gray {
+    background-color: #ccc;
+  }
+  
+  .time {
+    font-size: 0.9rem;
+    color: #666;
+  }
+  
+  .title {
+    font-size: 1rem;
+  }
+  
+  .day-block {
+    margin-bottom: 1.5rem;
+  }
+  
+  .day-title {
+    font-size: 18px;
+    color: white;
+    font-weight: 400;
+    letter-spacing: 2px;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+  }
+  
+  .event, .no-events {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    color: #fff;
+    font-size: 0.9rem;
+    padding-left: 0.5rem;
+  }
+  
+  .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-top: 0.4rem;
+  }
+  
+  .dot.gray {
+    background-color: #777;
+  }
+  
