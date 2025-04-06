@@ -1,11 +1,21 @@
-// EventDetails.jsx
 import React, { useState } from 'react';
 import './css/eventDetails.css';
 import LocationSearch from './LocationSearch';
+import InvitePeopleModal from './InvitePeopleModal';
 
 const EventDetails = ({ event, onClose, onEdit }) => {
   const [editing, setEditing] = useState(false);
   const [editedEvent, setEditedEvent] = useState({ ...event });
+    const [showInviteModal, setShowInviteModal] = useState(false);
+
+    const handleInvite = (emails) => {
+      const newPeople = emails.map(email => ({ name: 'Unknown', email, photo: 'default.png' }));
+      setEditedEvent(prev => ({
+        ...prev,
+        invitees: [...(prev.invitees || []), ...newPeople]
+      }));
+    };
+    
 
   const handleChange = (field, value) => {
     setEditedEvent({ ...editedEvent, [field]: value });
@@ -83,8 +93,11 @@ const EventDetails = ({ event, onClose, onEdit }) => {
 
           <div className="invite-box">
             <div className="invite-header">
-              <button className='invite-button' disabled={!editing}>+ Invite other people</button>
+              <button className='invite-button' disabled={!editing} onClick={() => setShowInviteModal(true)}>+ Invite other people</button>
             </div>
+            {showInviteModal && (
+                                <InvitePeopleModal onClose={() => setShowInviteModal(false)} onInvite={handleInvite} />
+                            )}
             {(editedEvent.invitees || []).map((person, index) => (
               <div className="invitee" key={index}>
                 <img className="dot-people-list" src={person.photo} alt={person.name} />

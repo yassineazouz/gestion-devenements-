@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import './css/addEvent.css';
 import people from './data.js';
 import LocationSearch from './LocationSearch';
+import InvitePeopleModal from './InvitePeopleModal';
 
 
 const AddEvent = ({ onClose, onSave }) => {
@@ -17,13 +18,21 @@ const AddEvent = ({ onClose, onSave }) => {
     const [notificationType, setNotificationType] = useState('Email');
     const [notificationValue, setNotificationValue] = useState(30);
     const [peopleList, setPeopleList] = useState(people); // initialPeopleList = imported or defined data
+    const [showInviteModal, setShowInviteModal] = useState(false);
+
+    const handleInvite = (emails) => {
+        const newPeople = emails.map(email => ({ name: 'Unknown', email, photo: 'default.png' }));
+        setPeopleList(prev => [...prev, ...newPeople]);
+    };
+
+
     const handleRemove = (indexToRemove) => {
         setPeopleList(prev => prev.filter((_, i) => i !== indexToRemove));
     };
 
     const handleSave = () => {
         const event = {
-            title,nom, prenom, desc, date, time, location, link, type,
+            title, nom, prenom, desc, date, time, location, link, type,
             notification: { type: notificationType, value: notificationValue },
         };
         onSave(event);
@@ -41,8 +50,8 @@ const AddEvent = ({ onClose, onSave }) => {
 
                     <input className="full-input" placeholder="Title" value={title} onChange={e => setTitle(e.target.value)} />
                     <div className="row">
-                    <input className="full-input" placeholder="Nom" value={nom} onChange={e => setNom(e.target.value)} />
-                    <input className="full-input" placeholder="Prenom" value={prenom} onChange={e => setPrenom(e.target.value)} />
+                        <input className="full-input" placeholder="Nom" value={nom} onChange={e => setNom(e.target.value)} />
+                        <input className="full-input" placeholder="Prenom" value={prenom} onChange={e => setPrenom(e.target.value)} />
                     </div>
                     <div className="row">
                         <div className='column'>
@@ -53,9 +62,15 @@ const AddEvent = ({ onClose, onSave }) => {
                             </div>
                         </div>
                         <div className="invite-box">
+
                             <div className="invite-header">
-                                <button className='invite-button'>+ Invite other people</button>
+                                <button className='invite-button' onClick={() => setShowInviteModal(true)}>
+                                    + Invite other people
+                                </button>
                             </div>
+                            {showInviteModal && (
+                                <InvitePeopleModal onClose={() => setShowInviteModal(false)} onInvite={handleInvite} />
+                            )}
 
                             {peopleList.map((person, index) => (
                                 <div className="invitee" key={index}>

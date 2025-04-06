@@ -1,0 +1,96 @@
+.invite-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: 100vw;
+    background: rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 99999;
+}
+
+.invite-modal {
+    background: white;
+    border-radius: 15px;
+    padding: 25px;
+    width: 400px;
+    box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.invite-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.invite-modal-header h3 {
+    font-weight: 500;
+    letter-spacing: 2px;
+    color: #2B3F4A;
+    margin: 0;
+}
+
+.close-invite {
+    font-size: 22px;
+    cursor: pointer;
+    color: #2B3F4A;
+    font-weight: 500;
+}
+
+input[type="email"] {
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+}
+
+.add-btn,
+.send-btn {
+
+    font-size: 16px;
+    font-weight: 400;
+    letter-spacing: 2px;
+    padding: 11px 23px;
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+
+    background: #263F4F;
+    color: white;
+    transition: box-shadow 0.7s;
+
+}
+
+.add-btn:hover, .send-btn:hover {
+    box-shadow: 1px 1px 20px 1px #263F4F;
+  }
+
+.email-input{
+    margin: 0;
+}
+
+.email-div{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 20px;
+}
+
+
+.invitee-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.invitee-list li {
+    padding: 6px 0;
+    border-bottom: 1px solid #eee;
+    font-size: 16px;
+    letter-spacing: 1px;
+}
