@@ -1,14 +1,13 @@
 .calendar-wrapper {
   display: flex;
   justify-content: center;
-  margin-top: 2rem;
   width: fit-content;
 }
 
-/* Main Calendar */
+
 .react-calendar {
   width: 300px;
-  background: #FDF7F2;
+  background: white;
   border-radius: 1rem;
   font-family: Arial, sans-serif;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
@@ -16,7 +15,7 @@
   padding: 1rem;
 }
 
-/* Navigation Bar */
+
 .react-calendar__navigation {
   display: flex;
   justify-content: space-between;
@@ -27,7 +26,7 @@
   border-bottom: 2px solid #B3B3B3;
 }
 
-/* Month Label */
+
 .react-calendar__navigation__label {
   order: 2;
   width: 100%;
@@ -35,7 +34,7 @@
   margin-top: 0.5rem;
 }
 
-/* Arrows Styling */
+
 .react-calendar__navigation__prev-button {
   order: 1;
   border-top-left-radius: 10px !important;
@@ -70,7 +69,7 @@
   min-width: 28px !important;
 }
 
-/* Month Title Override */
+
 .calendar-title {
   font-weight: bold !important;
   font-size: 24px !important;
@@ -82,7 +81,7 @@
   text-transform: capitalize;
 }
 
-/* Weekdays */
+
 .react-calendar__month-view__weekdays {
   text-align: center;
   font-weight: bold;
@@ -95,7 +94,7 @@
   color: #B3B3B3;
 }
 
-/* Day Tiles */
+
 .react-calendar__tile {
   text-align: center;
   padding: 0.6rem 0;
