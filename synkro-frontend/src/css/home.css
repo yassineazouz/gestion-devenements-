@@ -1,0 +1,93 @@
+.hero {
+    background-color: #fef9f6;
+    padding: 20px 60px;
+    display: flex;
+    justify-content: center;
+  }
+  
+  .hero-content {
+    display: flex;
+    align-items: center;           /* ✅ center vertically */
+    justify-content: space-between;
+    max-width: 1200px;
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 40px;
+  }
+  
+  .hero-text {
+    flex: 1;
+    max-width: 600px;
+  }
+  
+  .hero-text h1 {
+    font-size: 44px;
+    font-weight: 800;
+    color: #1f2937;
+    margin-bottom: 24px;
+  }
+  
+  .hero-text p {
+    font-size: 16px;
+    color: #4b5563;
+    line-height: 1.6;
+    margin-bottom: 32px;
+  }
+  
+  .hero-buttons {
+    display: flex;
+    gap: 20px;
+    margin-top: 30px;
+  }
+  
+  .primary,
+  .secondary {
+    font-size: 16px;
+    padding: 12px 28px;
+    border-radius: 10px;
+    font-weight: bold;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+  }
+  
+  /* Primary Button */
+  .primary {
+    background-color: #1e293b; /* dark navy */
+    color: white;
+  }
+  
+  .primary:hover {
+    background-color: #334155;
+    transform: scale(1.05);
+  }
+  
+  /* Secondary Button */
+  .secondary {
+    background-color: transparent;
+    color: #1e293b;
+  }
+  
+  .secondary:hover {
+    color: #fb6d3a; /* similar to your orange hover */
+    transform: scale(1.05);
+  }
+  
+  
+  .hero-image img.calendar-image {
+    max-width: 100%;
+    width: 400px;
+    height: auto;
+    transition: all 0.3s ease;
+    border-radius: 10px;
+  }
+  
+  .hero-image img.calendar-image:hover {
+    transform: scale(1.03);
+    filter: brightness(1.1);
+    box-shadow: rgba(0, 0, 0, 0.15);
+    cursor: pointer;
+  }
+  
+  
+  

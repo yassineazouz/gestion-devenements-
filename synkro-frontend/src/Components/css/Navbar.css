@@ -1,0 +1,51 @@
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 2px 60px;
+    background-color: #fef9f6;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+  }
+  
+  .logo {
+    height: 150px;
+    margin-left: -20px;
+    margin-right: 400px;
+  }
+  
+  .navbar-center {
+    list-style: none;
+    display: flex;
+    gap: 32px;
+    font-weight: 500;
+  }
+  
+  .navbar-center li a {
+    text-decoration: none;
+    color: #1f2937; /* default navy text */
+    font-size: 16px;
+    transition: color 0.3s ease;
+  }
+  
+  .navbar-center li a:hover {
+    color: #dd8262; /* your coral/orange hover */
+  }
+
+  
+  
+  .login-btn {
+    padding: 8px 16px;
+    border: 2px solid #1f2937;
+    border-radius: 8px;
+    background-color: white;
+    font-weight: 500;
+    cursor: pointer;
+    box-shadow: 0 2px 0 #1f2937;
+    transition: all 0.2s ease-in-out;
+  }
+  
+  .login-btn:hover {
+    background-color: #1f2937;
+    color: white;
+  }
+  
