@@ -1,0 +1,58 @@
+.user-menu-container {
+    position: relative;
+    display: inline-block;
+  }
+  
+  .profile-photo {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: #2B3F4A;
+    color: white;
+    font-weight: bold;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+  
+  .dropdown {
+    position: absolute;
+    right: 0;
+    top: 45px;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.2);
+    padding: 10px 0;
+    width: 180px;
+    z-index: 1000;
+  }
+  
+  .dropdown-header {
+    font-weight: 600;
+    font-size: 15px;
+    padding: 10px 15px 5px;
+    color: #2B3F4A;
+  }
+  
+  .dropdown button {
+    width: 100%;
+    padding: 10px 15px;
+    background: none;
+    border: none;
+    text-align: left;
+    cursor: pointer;
+    font-size: 14px;
+    color: #2B3F4A;
+    transition: background 0.2s;
+  }
+  
+  .dropdown button:hover {
+    background: #f0f0f0;
+  }
+  
+  .logout-btn {
+    color: #e63946;
+  }
+  

@@ -15,11 +15,17 @@ connectDB(); // Connexion à la base de données
 const app = express();
 app.use(cors());
 app.use(express.json());
-
+app.use((req, res, next) => {
+    console.log(`${req.method} ${req.originalUrl}`);
+    next();
+  });
+  
 app.use("/api/users", userRoutes);
 app.use("/api/invitations", invitationRoutes);
 app.use("/api/presences", presenceRoutes);
 app.use("/api/events", eventRoutes);
+
+
 
 // Gestion des erreurs 404
 app.use((req, res, next) => {
