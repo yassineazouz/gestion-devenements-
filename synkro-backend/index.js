@@ -1,8 +1,13 @@
 const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");
-const connectDB = require("./config/db"); // Connexion MongoDB
+const connectDB = require("./config/db"); 
 const userRoutes = require("./routes/userRoutes");
+const invitationRoutes = require("./routes/invitationRoutes");
+const presenceRoutes = require("./routes/presenceRoutes");
+const eventRoutes = require("./routes/eventRoutes");
+require("./scheduler/notificationScheduler");
+
 
 dotenv.config();
 connectDB(); // Connexion à la base de données
@@ -11,8 +16,10 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Définition des routes
-app.use("/api/users", userRoutes);  // Routes utilisateurs
+app.use("/api/users", userRoutes);
+app.use("/api/invitations", invitationRoutes);
+app.use("/api/presences", presenceRoutes);
+app.use("/api/events", eventRoutes);
 
 // Gestion des erreurs 404
 app.use((req, res, next) => {

@@ -64,6 +64,20 @@ const loginUser = async (req, res) => {
     } catch (error) {
         res.status(500).json({ message: "Erreur serveur", error: error.message });
     }
+
+    // Récupérer le profil de l'utilisateur connecté
+    const getUserProfile = async (req, res) => {
+    if (!req.user) {
+        return res.status(401).json({ message: "Utilisateur non authentifié" });
+    }
+
+        res.json({
+            _id: req.user._id,
+            nom: req.user.nom,
+            email: req.user.email,
+            role: req.user.role,
+        });
+    };
 };
 
-module.exports = { registerUser, loginUser };
+module.exports = { registerUser, loginUser, getUserProfile };

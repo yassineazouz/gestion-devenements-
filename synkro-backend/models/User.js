@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const bcrypt = require("bcrypt");
+const bcrypt = require("bcryptjs");
 
 const userSchema = new mongoose.Schema({
     nom: { type: String, required: true },
@@ -13,20 +13,16 @@ const userSchema = new mongoose.Schema({
     role: { type: String, enum: ["organisateur", "participant"], required: true }
 }, { timestamps: true });
 
-// Middleware pour hasher le mot de passe avant de sauvegarder
+// Hashage du mot de passe avant sauvegarde
 userSchema.pre("save", async function (next) {
     if (!this.isModified("mot_de_passe")) return next();
-    try {
-        const salt = await bcrypt.genSalt(10);
-        this.mot_de_passe = await bcrypt.hash(this.mot_de_passe, salt);
-        next();
-    } catch (err) {
-        next(err);
-    }
+    const salt = await bcrypt.genSalt(10);
+    this.mot_de_passe = await bcrypt.hash(this.mot_de_passe, salt);
+    next();
 });
 
-// Méthode pour comparer le mot de passe
-userSchema.methods.comparePassword = async function (password) {
+// Méthode pour comparer un mot de passe avec le hash
+userSchema.methods.matchPassword = async function (password) {
     return await bcrypt.compare(password, this.mot_de_passe);
 };
 
