@@ -66,15 +66,22 @@ input[type="email"] {
 
 }
 
-.add-btn:hover, .send-btn:hover {
+.add-btn:hover,
+.send-btn:hover {
     box-shadow: 1px 1px 20px 1px #263F4F;
-  }
+}
 
-.email-input{
+.email-input {
     margin: 0;
 }
 
-.email-div{
+.email-div {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.input-row {
     display: flex;
     flex-direction: row;
     align-items: center;

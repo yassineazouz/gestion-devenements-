@@ -11,7 +11,7 @@ const {
 router.post("/", createEvent);
 router.get("/", getAllEvents);
 router.get("/:id", getEventById);
-router.patch("/:id", updateEvent);
+router.put("/:id", updateEvent);
 router.delete("/:id", deleteEvent);
 
-module.exports = router;
+module.exports = router; 

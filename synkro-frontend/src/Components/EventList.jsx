@@ -1,11 +1,9 @@
 import React from 'react';
 import { getNextDays, formatDate } from '../utils/dateUtils';
-import events from './events';
 import './css/eventList.css';
 import { getColorForDate } from '../utils/colorMap';
 
-
-const EventList = ({ startDate }) => {
+const EventList = ({ startDate, events, onEventClick }) => {
   const days = getNextDays(startDate);
   const dayColors = ['#CD7B60', '#569CD6', '#B388EB', '#F2C94C', '#6FCF97', '#F2994A', '#EB5757'];
 
@@ -18,7 +16,7 @@ const EventList = ({ startDate }) => {
     <div className="event-list">
       {days.map((date, idx) => {
         const dateStr = date.toISOString().split('T')[0];
-        const dayEvents = events.filter((e) => e.date === dateStr);
+        const dayEvents = events.filter((e) => new Date(e.date).toISOString().split('T')[0] === dateStr);
 
         const today = new Date();
         const tomorrow = new Date();
@@ -36,12 +34,12 @@ const EventList = ({ startDate }) => {
             <div className="day-title">{label} {formatDate(date)}</div>
             {dayEvents.length > 0 ? (
               dayEvents.map((event, i) => (
-                <div key={i} className="event">
-                  <span className="dot" style={{ backgroundColor: getColorForDate(dateStr) }}
-                  ></span>
+                <div key={i} className="event" onClick={() => onEventClick(event)}>
+
+                  <span className="dot" style={{ backgroundColor: getColorForDate(dateStr) }}></span>
                   <div>
-                    <div className="time">{event.time}</div>
-                    <div className="title">{event.title}</div>
+                    <div className="time">{event.heure}</div>
+                    <div className="title">{event.titre}</div>
                   </div>
                 </div>
               ))
@@ -54,5 +52,6 @@ const EventList = ({ startDate }) => {
     </div>
   );
 };
+
 
 export default EventList;

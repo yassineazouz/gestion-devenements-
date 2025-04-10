@@ -1,38 +1,33 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import './css/userMenu.css';
 
-const UserMenu = ({ userName, onLogout, onAddEvent, onSettings }) => {
-  const [open, setOpen] = useState(false);
+const UserMenu = ({ userName, onLogout, onAddEvent, onSettings, onProfile, onClose }) => {
   const menuRef = useRef();
 
-  const handleClickOutside = (e) => {
-    if (menuRef.current && !menuRef.current.contains(e.target)) {
-      setOpen(false);
-    }
-  };
-
   useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        if (typeof onClose === "function") {
+          onClose();
+        } else {
+          console.error("❌ onClose not passed to UserMenu");
+        }
+      }
+    };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
+  }, [onClose]);
+  
   return (
-    <div className="user-menu-container" ref={menuRef}>
-      <div className="profile-photo" onClick={() => setOpen(!open)}>
-        {userName.charAt(0).toUpperCase()}
+    <div className="user-menu" ref={menuRef}>
+      <div className="user-menu-header">
+        <span className="user-name">{userName}</span>
+        <button className="close-btn" onClick={onClose}>×</button>
       </div>
-
-      {open && (
-        <div className="dropdown">
-          <p className="dropdown-header">Hi, {userName.split(' ')[0]}!</p>
-          <hr />
-          <button onClick={onAddEvent}>📅 Add Event</button>
-          <button onClick={onSettings}>⚙️ Settings</button>
-          <button onClick={() => alert('Feedback coming soon!')}>💬 Feedback</button>
-          <hr />
-          <button className="logout-btn" onClick={onLogout}>🚪 Logout</button>
-        </div>
-      )}
+      <button onClick={onProfile}>Profil</button>
+      <button onClick={onAddEvent}>Ajouter un événement</button>
+      <button onClick={onSettings}>Paramètres</button>
+      <button onClick={onLogout}>Déconnexion</button>
     </div>
   );
 };

@@ -1,33 +1,33 @@
 import React, { useState } from 'react';
 import './css/addEvent.css';
-import people from './data.js';
 import LocationSearch from './LocationSearch';
 import InvitePeopleModal from './InvitePeopleModal';
-
 import { createEvent } from '../services/event';
 
-const AddEvent = ({ onClose }) => {
+const AddEvent = ({ onClose, onSave }) => {
   const [title, setTitle] = useState('');
   const [nom, setNom] = useState('');
   const [prenom, setPrenom] = useState('');
   const [desc, setDesc] = useState('');
   const [date, setDate] = useState('');
-  const [time, setTime] = useState('');
+  const [startTime, setStartTime] = useState('');
+  const [endTime, setEndTime] = useState('');
+
   const [location, setLocation] = useState('');
   const [link, setLink] = useState('');
   const [type, setType] = useState('');
   const [notificationType, setNotificationType] = useState('Email');
   const [notificationValue, setNotificationValue] = useState(30);
   const [notificationUnit, setNotificationUnit] = useState('Minutes');
-  const [peopleList, setPeopleList] = useState(people);
+  const [peopleList, setPeopleList] = useState([]);
   const [showInviteModal, setShowInviteModal] = useState(false);
 
   const userId = localStorage.getItem('userId');
 
-  const handleInvite = (emails) => {
-    const newPeople = emails.map(email => ({ name: 'Unknown', email, photo: 'default.png' }));
-    setPeopleList(prev => [...prev, ...newPeople]);
+  const handleInvite = (invitees) => {
+    setPeopleList(prev => [...prev, ...invitees]);
   };
+
 
   const handleRemove = (indexToRemove) => {
     setPeopleList(prev => prev.filter((_, i) => i !== indexToRemove));
@@ -38,15 +38,22 @@ const AddEvent = ({ onClose }) => {
       titre: title,
       description: desc,
       date,
-      heure: time,
+      heure: `${startTime} - ${endTime}`,
       lieu: location,
       organisateur: userId,
       coOrganisateurs: [],
+      nom,
+      prenom,
+      link,
+      type,
+      invitees: peopleList  // ✅ SEND TO BACKEND
     };
 
+
     try {
-      await createEvent(newEvent);
+      const createdEvent = await createEvent(newEvent);
       alert('Événement ajouté !');
+      onSave(createdEvent); // Send event to Calendar
       onClose();
     } catch (err) {
       console.error(err);
@@ -55,8 +62,8 @@ const AddEvent = ({ onClose }) => {
   };
 
   return (
-    <div className="modal-overlay">
-      <div className="modal">
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <h2 className='event-header-title'>Add Event</h2>
           <h2 className="close-btn" onClick={onClose}>×</h2>
@@ -74,7 +81,9 @@ const AddEvent = ({ onClose }) => {
               <textarea className="desc-input" placeholder="Desc" value={desc} onChange={e => setDesc(e.target.value)} />
               <div className="row">
                 <input type="date" value={date} className='number-input' onChange={e => setDate(e.target.value)} />
-                <input type="time" value={time} className='number-input' onChange={e => setTime(e.target.value)} />
+                <input type="time" value={startTime} className='number-input' onChange={e => setStartTime(e.target.value)} placeholder="Start Time" />
+                <input type="time" value={endTime} className='number-input' onChange={e => setEndTime(e.target.value)} placeholder="End Time" />
+
               </div>
             </div>
 
@@ -87,9 +96,8 @@ const AddEvent = ({ onClose }) => {
               )}
               {peopleList.map((person, index) => (
                 <div className="invitee" key={index}>
-                  <img className="dot-people-list" src={person.photo} alt={person.name} />
                   <div className="person-info">
-                    <div className="name">{person.name}</div>
+                    <div className="name">{person.prenom} {person.nom}</div>
                     <div className="email">{person.email}</div>
                     <span className="delete-btn" onClick={() => handleRemove(index)}>×</span>
                   </div>
@@ -105,10 +113,13 @@ const AddEvent = ({ onClose }) => {
 
           <div className="row">
             <select className='select-event event-type' value={type} onChange={e => setType(e.target.value)}>
-              <option value="">Type of Meeting</option>
-              <option value="Meeting">Meeting</option>
-              <option value="Call">Call</option>
+              <option value="">Choisir un type d'événement</option>
+              <option value="réunion">Réunion</option>
+              <option value="conférence">Conférence</option>
+              <option value="fête">Fête</option>
+              <option value="autre">Autre</option>
             </select>
+
 
             <div className="notification-row">
               <span className='notif-text'>Notification</span>

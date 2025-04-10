@@ -93,6 +93,8 @@
 }
 
 .event-type {
+  margin: 0;
+  font-weight: 400;
   flex: 1;
 }
 

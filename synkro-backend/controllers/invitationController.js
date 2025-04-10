@@ -20,8 +20,9 @@ const sendInvitation = async (req, res) => {
 
         const invitation = new Invitation({
             destinataire: email,
-            evenement: eventId,
-            statut: "en_attente"
+            id_evenement: eventId, // ✅ FIXED
+            id_utilisateur: null,  // Optional: can be null or actual user ID
+            statut: "envoyée"
         });
 
         await invitation.save();
@@ -32,10 +33,10 @@ const sendInvitation = async (req, res) => {
         const mailOptions = {
             from: process.env.EMAIL_USER,
             to: email,
-            subject: `Invitation à l'événement : ${event.nom}`,
+            subject: `Invitation à l'événement : ${event.titre}`,
             html: `
-                <p>Vous êtes invité à l'événement : <strong>${event.nom}</strong></p>
-                <p>Date : ${event.date} | Lieu : ${event.lieu}</p>
+                <p>Vous êtes invité à l'événement : <strong>${event.titre}</strong></p>
+                <p>Date : ${new Date(event.date).toLocaleDateString()} | Lieu : ${event.lieu}</p>
                 <p><a href="${linkAccept}">Accepter</a> | <a href="${linkDecline}">Refuser</a></p>
             `
         };

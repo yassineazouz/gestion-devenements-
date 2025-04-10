@@ -10,12 +10,6 @@ function App() {
     setUserId(localStorage.getItem('userId'));
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('userId');
-    localStorage.removeItem('userToken');
-    setUserId(null);
-  };
-
   if (!userId) {
     return (
       <>
@@ -27,9 +21,6 @@ function App() {
 
   return (
     <div>
-      <button onClick={handleLogout} style={{ margin: '10px', padding: '8px 12px' }}>
-        Logout
-      </button>
       <HomeCalendar onClose={() => {}} />
     </div>
   );

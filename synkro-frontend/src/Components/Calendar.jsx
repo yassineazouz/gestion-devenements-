@@ -1,18 +1,25 @@
 import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
 import './css/calendar.css';
-import events from './events';
-import { getNextDays } from '../utils/dateUtils';
 import { getColorForDate } from '../utils/colorMap';
+import UserMenu from './UserMenu';
+import { useNavigate } from 'react-router-dom'; // ✅ Add if not there
+ // ✅ Add this line
+
 
 
 const hours = Array.from({ length: 24 }, (_, i) => i);
 const daysOfWeek = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
 
-const Calendar = ({ currentDate, setCurrentDate, onAddEventClick, onEventClick }) => {
+const Calendar = ({ currentDate, setCurrentDate, onAddEventClick, onEventClick, events = [] }) => {
   const CELL_HEIGHT = 60;
-  const eventColors = ['#CD7B60', '#569CD6', '#B388EB', '#F2C94C', '#6FCF97', '#F2994A', '#EB5757'];
   const [viewMode, setViewMode] = useState('week');
   const calendarBodyRef = useRef(null);
+  const [showMenu, setShowMenu] = useState(false);
+
+  const handleLogout = () => {
+    localStorage.clear();
+    window.location.reload();
+  };
 
   useLayoutEffect(() => {
     const updateScrollOverflow = () => {
@@ -42,7 +49,6 @@ const Calendar = ({ currentDate, setCurrentDate, onAddEventClick, onEventClick }
     return d;
   };
 
-
   const getWeekDays = () => {
     const start = new Date(startOfWeek(currentDate));
     return Array.from({ length: 7 }, (_, i) => {
@@ -55,18 +61,15 @@ const Calendar = ({ currentDate, setCurrentDate, onAddEventClick, onEventClick }
   const getMonthDays = () => {
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth();
-    const firstDayOfMonth = new Date(year, month, 1);
-    const startDay = new Date(firstDayOfMonth);
-    const startOffset = (firstDayOfMonth.getDay() + 6) % 7;
-    startDay.setDate(1 - startOffset);
-
-    const lastDayOfMonth = new Date(year, month + 1, 0);
-    const endDay = new Date(lastDayOfMonth);
-    const endOffset = 6 - ((lastDayOfMonth.getDay() + 6) % 7);
-    endDay.setDate(lastDayOfMonth.getDate() + endOffset);
+    const firstDay = new Date(year, month, 1);
+    const startOffset = (firstDay.getDay() + 6) % 7;
+    firstDay.setDate(firstDay.getDate() - startOffset);
+    const lastDay = new Date(year, month + 1, 0);
+    const endOffset = 6 - ((lastDay.getDay() + 6) % 7);
+    lastDay.setDate(lastDay.getDate() + endOffset);
 
     const days = [];
-    for (let d = new Date(startDay); d <= endDay; d.setDate(d.getDate() + 1)) {
+    for (let d = new Date(firstDay); d <= lastDay; d.setDate(d.getDate() + 1)) {
       days.push(new Date(d));
     }
     return days;
@@ -74,15 +77,15 @@ const Calendar = ({ currentDate, setCurrentDate, onAddEventClick, onEventClick }
 
   const nextPeriod = () => {
     const next = new Date(currentDate);
-    if (viewMode === 'week') next.setDate(currentDate.getDate() + 7);
-    else next.setMonth(currentDate.getMonth() + 1);
+    if (viewMode === 'week') next.setDate(next.getDate() + 7);
+    else next.setMonth(next.getMonth() + 1);
     setCurrentDate(next);
   };
 
   const prevPeriod = () => {
     const prev = new Date(currentDate);
-    if (viewMode === 'week') prev.setDate(currentDate.getDate() - 7);
-    else prev.setMonth(currentDate.getMonth() - 1);
+    if (viewMode === 'week') prev.setDate(prev.getDate() - 7);
+    else prev.setMonth(prev.getMonth() - 1);
     setCurrentDate(prev);
   };
 
@@ -99,13 +102,10 @@ const Calendar = ({ currentDate, setCurrentDate, onAddEventClick, onEventClick }
   const weekDays = getWeekDays();
   const monthDays = getMonthDays();
   const currentMonth = currentDate.getMonth();
-  const localTimezoneOffset = -new Date().getTimezoneOffset() / 60;
   const todayStr = new Date().toDateString();
-
-  const weekColorMap = {};
-  getNextDays(currentDate).forEach((d, i) => {
-    weekColorMap[d.toISOString().split('T')[0]] = eventColors[i % eventColors.length];
-  });
+  const timezoneOffset = -new Date().getTimezoneOffset() / 60;
+  const openAddEvent = onAddEventClick; // ✅ use what's already passed as prop
+const logoutUser = handleLogout;      // ✅ use your handleLogout above
 
   return (
     <div className="calendar-container">
@@ -120,11 +120,7 @@ const Calendar = ({ currentDate, setCurrentDate, onAddEventClick, onEventClick }
         <div className="right-controls">
           <button onClick={() => setCurrentDate(new Date())} className="today-button">Aujourd’hui</button>
           <div className="view-mode-wrapper">
-            <select
-              value={viewMode}
-              onChange={(e) => setViewMode(e.target.value)}
-              className="view-mode"
-            >
+            <select value={viewMode} onChange={e => setViewMode(e.target.value)} className="view-mode">
               <option value="week">Semaine</option>
               <option value="month">Mois</option>
             </select>
@@ -132,8 +128,19 @@ const Calendar = ({ currentDate, setCurrentDate, onAddEventClick, onEventClick }
           <button className="add-event" onClick={onAddEventClick}>
             <span className='plus-button'>＋</span> Ajouter un événement
           </button>
+          <button className="account-btn" onClick={() => setShowMenu(!showMenu)}>●</button>
 
-          <button className="account-btn">●</button>
+
+          {showMenu && (
+            <UserMenu
+            userName="John Doe"
+            onAddEvent={() => openAddEvent()}
+            onLogout={logoutUser}
+            onClose={() => setShowMenu(false)}
+          />
+          
+          )}
+
         </div>
       </div>
 
@@ -141,21 +148,24 @@ const Calendar = ({ currentDate, setCurrentDate, onAddEventClick, onEventClick }
         {viewMode === 'week' ? (
           <div className="calendar-grid">
             <div className="time-column">
-              <div className="tz-label time-slot">GMT {localTimezoneOffset >= 0 ? '+' : ''}{localTimezoneOffset}</div>
-              {hours.map((h, i) => (
-                <div key={i} className="time-slot no-top-padding">{h}h</div>
+              <div className="tz-label time-slot">GMT {timezoneOffset >= 0 ? '+' : ''}{timezoneOffset}</div>
+              {hours.map(h => (
+                <div key={h} className="time-slot no-top-padding">{h}h</div>
               ))}
             </div>
 
             {weekDays.map((date, i) => {
-              const dateStr = date.toISOString().split('T')[0];
-              const dayEvents = events.filter(e => e.date === dateStr);
+              const dateStr = date.toLocaleDateString('fr-CA');
               const isToday = date.toDateString() === todayStr;
+              const eventsForDay = events.filter(e =>
+                e.date && new Date(e.date).toLocaleDateString('fr-CA') === dateStr
+              );
+
               return (
                 <div key={i} className={`day-column ${isToday ? 'highlighted-day' : ''}`}>
                   <div className="day-header">
-                    <div className='day-week'>{daysOfWeek[(date.getDay() + 6) % 7]}</div>
-                    <div className='day-number'>{date.getDate()}</div>
+                    <div className="day-week">{daysOfWeek[(date.getDay() + 6) % 7]}</div>
+                    <div className="day-number">{date.getDate()}</div>
                   </div>
 
                   {hours.map((_, j) => (
@@ -163,17 +173,19 @@ const Calendar = ({ currentDate, setCurrentDate, onAddEventClick, onEventClick }
                   ))}
 
                   <div className="event-overlay">
-                    {dayEvents.map((event, idx) => {
-                      const [startTime, endTime] = event.time.split(' - ');
-                      const [startHour, startMin] = startTime.split(':').map(Number);
-                      const [endHour, endMin] = endTime.split(':').map(Number);
+                    {eventsForDay.map((e, idx) => {
+                      if (!e.heure || !e.heure.includes(':')) return null;
 
-                      const eventStart = startHour * 60 + startMin;
-                      const eventEnd = endHour * 60 + endMin;
-                      const eventDuration = eventEnd - eventStart;
+                      const [startTime, endTime] = e.heure.split(' - ');
+                      if (!startTime || !endTime) return null;
 
-                      const top = 82 + (eventStart * CELL_HEIGHT) / 60;
-                      const height = (eventDuration * CELL_HEIGHT) / 60;
+                      const [startHour = 0, startMin = 0] = startTime.split(':').map(Number);
+                      const [endHour = 0, endMin = 0] = endTime.split(':').map(Number);
+
+                      const start = startHour * 60 + startMin;
+                      const end = endHour * 60 + endMin;
+                      const height = ((end - start) * CELL_HEIGHT) / 60;
+                      const top = 82 + (start * CELL_HEIGHT) / 60;
 
                       return (
                         <div
@@ -184,14 +196,18 @@ const Calendar = ({ currentDate, setCurrentDate, onAddEventClick, onEventClick }
                             height: `${height}px`,
                             backgroundColor: getColorForDate(dateStr)
                           }}
-                          title={event.title}
-                          onClick={() => onEventClick(event)} // << This opens the event details
+                          onClick={() => onEventClick(e)}
+                          title={e.titre}
                         >
-                          <div className="event-time">{event.time}</div>
-                          <div className="event-title">{event.title}</div>
+                          <div className="event-content">
+                            <div className="event-time">{e.heure}</div>
+                            <div className="event-title">{e.titre}</div>
+                            <div className="event-type">{e.categorie}</div>
+                            <div className="event-organizer">{e.nom} {e.prenom}</div>
+                            <div className="event-location">{(e.lieu || '').split(',')[3]}</div>
+                          </div>
+
                         </div>
-
-
                       );
                     })}
                   </div>
@@ -200,9 +216,9 @@ const Calendar = ({ currentDate, setCurrentDate, onAddEventClick, onEventClick }
             })}
 
             <div className="time-column right">
-              <div className="tz-label time-slot">GMT {localTimezoneOffset >= 0 ? '+' : ''}{localTimezoneOffset}</div>
-              {hours.map((h, i) => (
-                <div key={i} className="time-slot no-top-padding">{h}h</div>
+              <div className="tz-label time-slot">GMT {timezoneOffset >= 0 ? '+' : ''}{timezoneOffset}</div>
+              {hours.map(h => (
+                <div key={h} className="time-slot no-top-padding">{h}h</div>
               ))}
             </div>
           </div>
@@ -217,7 +233,11 @@ const Calendar = ({ currentDate, setCurrentDate, onAddEventClick, onEventClick }
             <div className="month-grid">
               {monthDays.map((date, i) => {
                 const isToday = date.toDateString() === todayStr;
-                const dateStr = date.toISOString().split('T')[0];
+                const dateStr = date.toLocaleDateString('fr-CA');
+                const eventsForDay = events.filter(e =>
+                  e.date && new Date(e.date).toLocaleDateString('fr-CA') === dateStr
+                );
+
                 return (
                   <div
                     key={i}
@@ -226,26 +246,20 @@ const Calendar = ({ currentDate, setCurrentDate, onAddEventClick, onEventClick }
                   >
                     <div className="month-day-label">{date.getDate()}</div>
                     <div className="month-dots">
-                      {events
-                        .filter(e => e.date === dateStr)
-                        .map((e, idx) => (
-                          <div
-                            key={idx}
-                            className="month-dot-line"
-                            title={`${e.time} - ${e.title}`}
-                          >
-                            <span
-                              className="month-dot"
-                              style={{ backgroundColor: getColorForDate(dateStr) }}
-                            />
-                            <div className="month-dot-text">
-                              <span className="dot-time">{e.time.split(' - ')[0]}</span>{' '}
-                              <span className="dot-title">{e.title}</span>
-                            </div>
-                          </div>
-                        ))}
-                    </div>
+                      {eventsForDay.map((e, idx) => (
+                        <div key={idx} className="month-dot-line" title={`${e.heure || ''} - ${e.titre}`}>
+                          <span
+                            className="month-dot"
+                            style={{ backgroundColor: getColorForDate(dateStr) }}
+                          />
+                          <div className="month-dot-text">
+                            <span className="dot-time">{e.heure}</span>{' '}
+                            <span className="dot-title">{e.titre}</span>
 
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 );
               })}
