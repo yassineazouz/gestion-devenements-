@@ -1,4 +1,6 @@
 const Event = require("../models/Event");
+const User = require("../models/User");
+const Invitation = require("../models/Invitation");
 const nodemailer = require("nodemailer");
 
 const transporter = nodemailer.createTransport({
@@ -9,112 +11,141 @@ const transporter = nodemailer.createTransport({
   }
 });
 
-
 const createEvent = async (req, res) => {
-    const {
-        titre, description, date, heure, lieu, categorie,
-        organisateur, coOrganisateurs, nom, prenom, link, type, invitees = []
-    } = req.body;
+  const {
+    titre, description, date, heure, lieu, categorie,
+    organisateur, coOrganisateurs, nom, prenom, link, type, invitees = []
+  } = req.body;
 
-    try {
-        const event = new Event({
-            titre, description, date, heure, lieu, categorie,
-            organisateur, coOrganisateurs, nom, prenom, link, type, invitees
-        });
+  try {
+    const event = new Event({
+      titre, description, date, heure, lieu, categorie,
+      organisateur, coOrganisateurs, nom, prenom, link, type
+    });
+    
 
-        await event.save();
+    await event.save();
 
-        // ✉️ Send email to invitees
-        for (const invitee of invitees) {
-            const mailOptions = {
-                from: process.env.EMAIL_USER,
-                to: invitee.email,
-                subject: `Invitation à l'événement : ${titre}`,
-                html: `
-                    <p>Bonjour,</p>
-                    <p>Vous êtes invité à <strong>${titre}</strong></p>
-                    <p><strong>Lieu:</strong> ${lieu}<br />
-                    <strong>Date:</strong> ${new Date(date).toLocaleDateString()}<br />
-                    <strong>Heure:</strong> ${heure}</p>
-                    <p><a href="http://localhost:3000">Voir l'événement</a></p>
-                `
-            };
+    for (const invitee of invitees) {
+      const user = await User.findOne({ email: invitee.email });
 
-            await transporter.sendMail(mailOptions);
-        }
+      const invitation = new Invitation({
+        evenement: event._id,
+        id_utilisateur: user?._id || null,
+        statut: "envoyée"
+      });
 
-        res.status(201).json(event);
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: "Erreur lors de la création de l’événement", error });
+      await invitation.save();
+
+      if (user) {
+        user.invitations.push(invitation._id);
+        await user.save();
+      }
+
+      await transporter.sendMail({
+        from: process.env.EMAIL_USER,
+        to: invitee.email,
+        subject: `Invitation à l'événement : ${titre}`,
+        html: `
+            <p>Bonjour,</p>
+            <p>Vous êtes invité à <strong>${titre}</strong></p>
+            <p><strong>Lieu:</strong> ${lieu}<br />
+            <strong>Date:</strong> ${new Date(date).toLocaleDateString()}<br />
+            <strong>Heure:</strong> ${heure}</p>
+            <p><a href="http://localhost:3000">Voir l'événement</a></p>
+          `
+      });
     }
+
+    res.status(201).json(event);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Erreur lors de la création de l’événement", error });
+  }
 };
-
-
 const getAllEvents = async (req, res) => {
-    try {
-        const events = await Event.find().populate("organisateur", "nom email");
-        res.json(events);
-    } catch (error) {
-        res.status(500).json({ message: "Erreur lors de la récupération des événements" });
-    }
+  try {
+    const userId = req.user._id;
+
+    const acceptedInvitations = await Invitation.find({
+      id_utilisateur: userId,
+      statut: 'acceptée'
+    });
+
+    const acceptedEventIds = acceptedInvitations.map(inv => inv.evenement);
+
+
+    const events = await Event.find({
+      $or: [
+        { organisateur: userId },
+        { _id: { $in: acceptedEventIds } }
+      ]
+    });
+
+    res.json(events);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Erreur lors de la récupération des événements" });
+  }
 };
+
+
+
 
 const getEventById = async (req, res) => {
-    try {
-        const event = await Event.findById(req.params.id).populate("organisateur", "nom email");
-        if (!event) return res.status(404).json({ message: "Événement non trouvé" });
+  try {
+    const event = await Event.findById(req.params.id).populate("organisateur", "nom email");
+    if (!event) return res.status(404).json({ message: "Événement non trouvé" });
 
-        res.json(event);
-    } catch (error) {
-        res.status(500).json({ message: "Erreur lors de la récupération de l’événement" });
-    }
+    res.json(event);
+  } catch (error) {
+    res.status(500).json({ message: "Erreur lors de la récupération de l’événement" });
+  }
 };
-
 
 const updateEvent = async (req, res) => {
-    try {
-        const event = await Event.findByIdAndUpdate(
-            req.params.id,
-            {
-                ...req.body, // this includes nom, prenom, link if passed from frontend
-            },
-            {
-                new: true,
-                runValidators: true
-            }
-        );
-
-        if (!event) {
-            return res.status(404).json({ message: "Événement non trouvé" });
-        }
-
-        res.json(event);
-    } catch (error) {
-        res.status(500).json({ message: "Erreur lors de la mise à jour" });
+  try {
+    const event = await Event.findById(req.params.id);
+    if (!event) {
+      return res.status(404).json({ message: "Événement non trouvé" });
     }
-};
 
+    // 👇 Only organizer can update
+    if (event.organisateur.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Vous n'êtes pas autorisé à modifier cet événement." });
+    }
+
+    Object.assign(event, req.body);
+    await event.save();
+
+
+    if (!event) {
+      return res.status(404).json({ message: "Événement non trouvé" });
+    }
+
+    res.json(event);
+  } catch (error) {
+    res.status(500).json({ message: "Erreur lors de la mise à jour" });
+  }
+};
 
 const deleteEvent = async (req, res) => {
-    try {
-        const event = await Event.findByIdAndDelete(req.params.id);
-
-        if (!event) {
-            return res.status(404).json({ message: "Événement non trouvé" });
-        }
-
-        res.json({ message: "Événement supprimé avec succès" });
-    } catch (error) {
-        res.status(500).json({ message: "Erreur lors de la suppression" });
+  try {
+    const event = await Event.findByIdAndDelete(req.params.id);
+    if (!event) {
+      return res.status(404).json({ message: "Événement non trouvé" });
     }
+
+    res.json({ message: "Événement supprimé avec succès" });
+  } catch (error) {
+    res.status(500).json({ message: "Erreur lors de la suppression" });
+  }
 };
 
-
 module.exports = {
-    createEvent,
-    getAllEvents,
-    getEventById,
-    updateEvent,
-    deleteEvent
+  createEvent,
+  getAllEvents,
+  getEventById,
+  updateEvent,
+  deleteEvent
 };

@@ -1,4 +1,80 @@
+.notif-btn {
+  position: relative;
+  background: none;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  margin-right: 10px;
+}
 
+.notif-count {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background: red;
+  color: white;
+  font-size: 12px;
+  border-radius: 50%;
+  padding: 2px 6px;
+}
+
+.notif-popup {
+  position: absolute;
+  top: 60px;
+  right: 60px;
+  background: #fff;
+  border: 1px solid #ccc;
+  padding: 10px;
+  width: 300px;
+  z-index: 1000;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.notif-item {
+  border-bottom: 1px solid #eee;
+  padding: 10px 0;
+}
+.notif-window {
+    position: absolute;
+    top: 90px;
+    right: 30px;
+    width: 300px;
+    background: white;
+    border: 1px solid #ccc;
+    z-index: 10;
+    border-radius: 5px;
+    padding: 1rem;
+    box-shadow: 0 0 10px rgba(0,0,0,0.2);
+  }
+  
+  .notif-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .notif-close {
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+  }
+  
+  .notif-list {
+    margin-top: 10px;
+    list-style: none;
+    padding: 0;
+  }
+  
+  .notif-item {
+    border-bottom: 1px solid #eee;
+    padding: 5px 0;
+  }
+  
+  .notif-item button {
+    margin-right: 10px;
+  }
+  
 .calendar-container {
     width: 100%;
     height: 100vh;

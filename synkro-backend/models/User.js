@@ -2,13 +2,19 @@ const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
 
 const userSchema = new mongoose.Schema({
-    nom: { type: String, required: true },
-    email: { type: String, required: true, unique: true },
-    mot_de_passe: { type: String, required: true }
-  });
-  
+  nom: { type: String, required: true },
+  email: { type: String, required: true, unique: true },
+  mot_de_passe: { type: String, required: true },
+  invitations: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Invitation"
+    }
+  ]
+}, { toJSON: { virtuals: true }, toObject: { virtuals: true } });
 
-// Hash le mot de passe avant sauvegarde
+
+// 🔐 Hash password before save
 userSchema.pre("save", async function (next) {
   if (!this.isModified("mot_de_passe")) return next();
   const salt = await bcrypt.genSalt(10);
@@ -16,7 +22,7 @@ userSchema.pre("save", async function (next) {
   next();
 });
 
-// Vérifie le mot de passe
+// ✅ Check password
 userSchema.methods.matchPassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.mot_de_passe);
 };

@@ -1,4 +1,4 @@
-const express = require("express");
+const express = require('express');
 const router = express.Router();
 const {
   sendInvitation,
@@ -6,12 +6,12 @@ const {
   declineInvitation,
   getInvitationsByEvent,
   getInvitationsByEmail
-} = require("../controllers/invitationController");
+} = require('../controllers/invitationController');
 
-router.post("/", sendInvitation);
-router.get("/accept/:id", acceptInvitation);
-router.get("/decline/:id", declineInvitation);
-router.get("/event/:eventId", getInvitationsByEvent);
-router.get("/user/:email", getInvitationsByEmail);
+router.post('/', sendInvitation);
+router.post('/:id/accept', acceptInvitation);   // ✅ This must exist
+router.post('/:id/decline', declineInvitation); // ✅ This must exist
+router.get('/event/:eventId', getInvitationsByEvent);
+router.get('/email/:email', getInvitationsByEmail);
 
 module.exports = router;

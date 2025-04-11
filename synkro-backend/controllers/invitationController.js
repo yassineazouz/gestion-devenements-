@@ -18,71 +18,129 @@ const sendInvitation = async (req, res) => {
         const event = await Event.findById(eventId);
         if (!event) return res.status(404).json({ message: "Événement non trouvé" });
 
+        const existingUser = await User.findOne({ email });
+
         const invitation = new Invitation({
             destinataire: email,
-            id_evenement: eventId, // ✅ FIXED
-            id_utilisateur: null,  // Optional: can be null or actual user ID
-            statut: "envoyée"
+            evenement: eventId,
+            statut: "en_attente",
+            id_utilisateur: existingUser?._id || null
         });
 
         await invitation.save();
 
-        const linkAccept = `http://localhost:3000/invitation/accept/${invitation._id}`;
-        const linkDecline = `http://localhost:3000/invitation/decline/${invitation._id}`;
+        if (existingUser) {
+            existingUser.invitations.push(invitation._id);
+            await existingUser.save();
+        }
 
         const mailOptions = {
             from: process.env.EMAIL_USER,
             to: email,
             subject: `Invitation à l'événement : ${event.titre}`,
             html: `
-                <p>Vous êtes invité à l'événement : <strong>${event.titre}</strong></p>
-                <p>Date : ${new Date(event.date).toLocaleDateString()} | Lieu : ${event.lieu}</p>
-                <p><a href="${linkAccept}">Accepter</a> | <a href="${linkDecline}">Refuser</a></p>
-            `
+        <p>Vous êtes invité à l'événement : <strong>${event.titre}</strong></p>
+        <p>Date : ${event.date} | Lieu : ${event.lieu}</p>
+        <p><a href="http://localhost:3000/invitation/accept/${invitation._id}">Accepter</a> | 
+           <a href="http://localhost:3000/invitation/decline/${invitation._id}">Refuser</a></p>
+      `
         };
 
         await transporter.sendMail(mailOptions);
-
-        res.status(200).json({ message: "Invitation envoyée par email avec succès !" });
+        res.status(200).json({ message: "Invitation envoyée avec succès !" });
     } catch (err) {
         console.error(err);
         res.status(500).json({ message: "Erreur lors de l'envoi de l'invitation." });
     }
 };
 
-// Accepter une invitation
 const acceptInvitation = async (req, res) => {
     try {
-        const invitation = await Invitation.findById(req.params.id);
+        const invitation = await Invitation.findById(req.params.id).populate("id_utilisateur");
         if (!invitation) return res.status(404).send("Invitation non trouvée");
 
-        invitation.statut = "accepte";
+        invitation.statut = "acceptée";
         await invitation.save();
+
+        const event = await Event.findById(invitation.evenement);
+        if (!event) return res.status(404).send("Événement introuvable");
+
+        // Add user to invitees if not already included
+        if (invitation.id_utilisateur) {
+            const user = invitation.id_utilisateur;
+            const alreadyInvited = event.invitees.some(i => i.email === user.email);
+
+            if (!alreadyInvited) {
+                event.invitees.push({
+                    email: user.email,
+                    nom: user.nom,
+                    prenom: user.prenom
+                });
+                await event.save();
+            }
+
+            const organizer = await User.findById(event.organisateur);
+            if (organizer) {
+                await transporter.sendMail({
+                    from: process.env.EMAIL_USER,
+                    to: organizer.email,
+                    subject: "Invitation acceptée",
+                    html: `
+                      <p>${user.nom} ${user.prenom} (${user.email}) 
+                      a accepté votre invitation à l'événement <strong>${event.titre}</strong>.</p>
+                    `
+                });
+            }
+        }
 
         res.send("Invitation acceptée avec succès !");
-        // Ou rediriger : res.redirect("http://localhost:3000/confirmation-accept");
     } catch (err) {
+        console.error(err);
         res.status(500).send("Erreur lors du traitement de l'invitation.");
     }
 };
 
-// Refuser une invitation
+
 const declineInvitation = async (req, res) => {
     try {
-        const invitation = await Invitation.findById(req.params.id);
+        const invitation = await Invitation.findById(req.params.id).populate("id_utilisateur");
+
         if (!invitation) return res.status(404).send("Invitation non trouvée");
 
-        invitation.statut = "refuse";
+        invitation.statut = "refusée";
         await invitation.save();
 
+        const event = await Event.findById(invitation.evenement);
+        if (!event) return res.status(404).send("Événement introuvable");
+
+        // Retirer l'utilisateur de l'event
+        if (invitation.id_utilisateur) {
+            event.invitees = event.invitees.filter(inv =>
+                inv.email !== invitation.id_utilisateur.email
+            );
+            await event.save();
+
+            // Envoie une notification à l’organisateur
+            const organizer = await User.findById(event.organisateur);
+            if (organizer) {
+                const mailOptions = {
+                    from: process.env.EMAIL_USER,
+                    to: organizer.email,
+                    subject: "Invitation refusée",
+                    html: `
+            <p>${invitation.id_utilisateur.nom} ${invitation.id_utilisateur.prenom} (${invitation.id_utilisateur.email}) a refusé l'invitation à l'événement <strong>${event.titre}</strong>.</p>
+          `
+                };
+                await transporter.sendMail(mailOptions);
+            }
+        }
+
         res.send("Invitation refusée.");
-        // Ou rediriger : res.redirect("http://localhost:3000/confirmation-refuse");
     } catch (err) {
         res.status(500).send("Erreur lors du traitement de l'invitation.");
     }
 };
 
-// Récupérer les invitations d'un événement
 const getInvitationsByEvent = async (req, res) => {
     try {
         const eventId = req.params.eventId;
@@ -93,7 +151,6 @@ const getInvitationsByEvent = async (req, res) => {
     }
 };
 
-// Récupérer les invitations envoyées à un email spécifique
 const getInvitationsByEmail = async (req, res) => {
     try {
         const email = req.params.email;
@@ -111,4 +168,3 @@ module.exports = {
     getInvitationsByEvent,
     getInvitationsByEmail
 };
-

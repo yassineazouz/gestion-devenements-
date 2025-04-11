@@ -16,14 +16,18 @@ const HomeCalendar = () => {
 
   const handleEventClick = (event) => setSelectedEvent(event);
 
-  useEffect(() => {
-    fetchEvents().then(setEventList).catch(console.error);
-  }, []);
-
   const refreshEvents = async () => {
-    const updated = await fetchEvents();
-    setEventList(updated);
+    try {
+      const updated = await fetchEvents();
+      setEventList(updated);
+    } catch (error) {
+      console.error('❌ Failed to fetch events:', error);
+    }
   };
+
+  useEffect(() => {
+    refreshEvents();
+  }, []);
 
   return (
     <div className='home-body'>
@@ -35,9 +39,8 @@ const HomeCalendar = () => {
         <EventList
           startDate={selectedDate}
           events={eventList}
-          onEventClick={(e) => setSelectedEvent(e)} // ✅ this must be passed
+          onEventClick={handleEventClick}
         />
-
       </div>
 
       <div className='calendar-f2'>
@@ -47,26 +50,28 @@ const HomeCalendar = () => {
           onAddEventClick={() => setShowAddEvent(true)}
           onEventClick={handleEventClick}
           events={eventList}
+          onRefreshEvents={refreshEvents} // ✅ pass refresh function
         />
+
+
         {selectedEvent && (
           <EventDetails
             event={selectedEvent}
             onClose={() => setSelectedEvent(null)}
-            onEdit={() => refreshEvents()}
+            onEdit={refreshEvents}
             onDelete={() => {
               refreshEvents();
-              setSelectedEvent(null); // Close modal after delete
+              setSelectedEvent(null);
             }}
           />
         )}
-
       </div>
 
       {showAddEvent && (
         <AddEvent
           onClose={() => setShowAddEvent(false)}
           onSave={() => {
-            refreshEvents(); // ✅ Refresh the list after save
+            refreshEvents();
             setShowAddEvent(false);
           }}
         />

@@ -1,16 +1,14 @@
-// models/Invitation.js
 const mongoose = require("mongoose");
 
 const invitationSchema = new mongoose.Schema({
-  id_evenement: {
+  evenement: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Event",
     required: true
   },
   id_utilisateur: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "User",
-    required: false // ✅ Now optional
+    ref: "User"
   },
   statut: {
     type: String,

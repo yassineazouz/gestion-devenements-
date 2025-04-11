@@ -2,24 +2,65 @@ import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
 import './css/calendar.css';
 import { getColorForDate } from '../utils/colorMap';
 import UserMenu from './UserMenu';
-import { useNavigate } from 'react-router-dom'; // ✅ Add if not there
- // ✅ Add this line
-
-
+import axios from 'axios';
 
 const hours = Array.from({ length: 24 }, (_, i) => i);
 const daysOfWeek = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
 
-const Calendar = ({ currentDate, setCurrentDate, onAddEventClick, onEventClick, events = [] }) => {
+const Calendar = ({ currentDate, setCurrentDate, onAddEventClick, onEventClick, events, onRefreshEvents }) => {
   const CELL_HEIGHT = 60;
-  const [viewMode, setViewMode] = useState('week');
   const calendarBodyRef = useRef(null);
+  const [viewMode, setViewMode] = useState('week');
   const [showMenu, setShowMenu] = useState(false);
+  const [showNotifWindow, setShowNotifWindow] = useState(false);
+  const [invitations, setInvitations] = useState([]);
 
   const handleLogout = () => {
     localStorage.clear();
     window.location.reload();
   };
+
+  const userId = localStorage.getItem('userId');
+  const loadInvitations = () => {
+    if (userId) {
+      axios
+        .get(`http://localhost:5000/api/users/${userId}/invitations`)
+        .then(res => setInvitations(res.data))
+        .catch(err => console.error("Failed to fetch invitations:", err));
+    }
+  };
+  useEffect(() => {
+    loadInvitations();
+  }, [userId]);
+
+  useEffect(() => {
+    if (userId) {
+      axios
+        .get(`http://localhost:5000/api/users/${userId}/invitations`)
+        .then(res => setInvitations(res.data))
+        .catch(err => console.error("Failed to fetch invitations:", err));
+    }
+  }, [userId]);
+  const handleAccept = async (id) => {
+    try {
+      await axios.post(`http://localhost:5000/api/invitations/${id}/accept`);
+      await onRefreshEvents();     // refresh events
+      await loadInvitations();     // refresh invitations
+    } catch (e) {
+      console.error('Accept failed', e);
+    }
+  };
+
+  const handleDecline = async (id) => {
+    try {
+      await axios.post(`http://localhost:5000/api/invitations/${id}/decline`);
+      await onRefreshEvents();     // refresh events
+      await loadInvitations();     // refresh invitations
+    } catch (e) {
+      console.error('Decline failed', e);
+    }
+  };
+
 
   useLayoutEffect(() => {
     const updateScrollOverflow = () => {
@@ -104,8 +145,6 @@ const Calendar = ({ currentDate, setCurrentDate, onAddEventClick, onEventClick, 
   const currentMonth = currentDate.getMonth();
   const todayStr = new Date().toDateString();
   const timezoneOffset = -new Date().getTimezoneOffset() / 60;
-  const openAddEvent = onAddEventClick; // ✅ use what's already passed as prop
-const logoutUser = handleLogout;      // ✅ use your handleLogout above
 
   return (
     <div className="calendar-container">
@@ -130,19 +169,40 @@ const logoutUser = handleLogout;      // ✅ use your handleLogout above
           </button>
           <button className="account-btn" onClick={() => setShowMenu(!showMenu)}>●</button>
 
-
           {showMenu && (
             <UserMenu
-            userName="John Doe"
-            onAddEvent={() => openAddEvent()}
-            onLogout={logoutUser}
-            onClose={() => setShowMenu(false)}
-          />
-          
+              userName="John Doe"
+              onAddEvent={onAddEventClick}
+              onLogout={handleLogout}
+              onClose={() => setShowMenu(false)}
+              invitations={invitations}
+              onOpenNotifications={() => setShowNotifWindow(true)}
+            />
           )}
-
         </div>
       </div>
+
+      {showNotifWindow && (
+        <div className="notif-window">
+          <div className="notif-header">
+            <h3>Invitations reçues</h3>
+            <button className="notif-close" onClick={() => setShowNotifWindow(false)}>×</button>
+          </div>
+          <ul className="notif-list">
+            {invitations.length === 0 ? (
+              <p>Aucune invitation</p>
+            ) : (
+              invitations.map(inv => (
+                <li key={inv._id} className="notif-item">
+                  <p>Événement ID : {inv.evenement}</p>
+                  <button onClick={() => handleAccept(inv._id)}>Accepter</button>
+                  <button onClick={() => handleDecline(inv._id)}>Refuser</button>
+                </li>
+              ))
+            )}
+          </ul>
+        </div>
+      )}
 
       <div className="calendar-body" ref={calendarBodyRef}>
         {viewMode === 'week' ? (
@@ -206,7 +266,6 @@ const logoutUser = handleLogout;      // ✅ use your handleLogout above
                             <div className="event-organizer">{e.nom} {e.prenom}</div>
                             <div className="event-location">{(e.lieu || '').split(',')[3]}</div>
                           </div>
-
                         </div>
                       );
                     })}
@@ -255,7 +314,6 @@ const logoutUser = handleLogout;      // ✅ use your handleLogout above
                           <div className="month-dot-text">
                             <span className="dot-time">{e.heure}</span>{' '}
                             <span className="dot-title">{e.titre}</span>
-
                           </div>
                         </div>
                       ))}
