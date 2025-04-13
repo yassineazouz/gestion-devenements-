@@ -1,33 +1,43 @@
 import React, { useState } from 'react';
 import { loginUser } from '../services/auth';
+import { useNavigate, Link } from 'react-router-dom';
+import './css/Auth.css';
 
-const Login = ({ onSuccess }) => {
+const Login = () => {
   const [email, setEmail] = useState('');
   const [mot_de_passe, setMotDePasse] = useState('');
+  const [error, setError] = useState('');
+  const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    setError('');
     try {
       const data = await loginUser({ email, mot_de_passe });
-      console.log('✅ User logged in:', data);
       localStorage.setItem('userToken', data.token);
       localStorage.setItem('userId', data._id);
-      alert('Connexion réussie !');
-      onSuccess(); // Notify App that user is logged in
+      navigate('/calendar');
     } catch (err) {
-      const msg = err.response?.data?.message || "Erreur lors de la connexion";
-      console.error('❌ Login error:', msg);
-      alert(msg);
+      const msg = err.response?.data?.message || 'Erreur lors de la connexion';
+      setError(msg);
     }
   };
 
   return (
-    <form onSubmit={handleLogin}>
-      <input type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} />
-      <input type="password" placeholder="Mot de passe" value={mot_de_passe} onChange={e => setMotDePasse(e.target.value)} />
-      <button type="submit">Login</button>
-    </form>
+    <div className="auth-container">
+      <form className="auth-card" onSubmit={handleLogin}>
+        <h2>Connexion</h2>
+        {error && <p className="error">{error}</p>}
+        <input type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} required />
+        <input type="password" placeholder="Mot de passe" value={mot_de_passe} onChange={e => setMotDePasse(e.target.value)} required />
+        <button type="submit">Se connecter</button>
+        <p className="auth-link">
+          Pas encore inscrit ? <Link to="/register">Créer un compte</Link>
+        </p>
+      </form>
+    </div>
   );
 };
 
 export default Login;
+
