@@ -31,6 +31,8 @@ const EventDetails = ({ event, onClose, onEdit, onDelete }) => {
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
   const [addedInvitees, setAddedInvitees] = useState([]);
+  // At the top inside the component
+  const [invitationId, setInvitationId] = useState(null);
 
   useEffect(() => {
     if (event.heure) {
@@ -39,6 +41,8 @@ const EventDetails = ({ event, onClose, onEdit, onDelete }) => {
       setEndTime(end || '');
     }
   }, [event]);
+  const userId = localStorage.getItem('userId');
+  const isOrganizer = event.organisateur === userId;
 
   const handleInvite = (invitees) => {
     const newInvitees = invitees.map(inv => ({
@@ -99,6 +103,22 @@ const EventDetails = ({ event, onClose, onEdit, onDelete }) => {
       alert("Erreur lors de la mise à jour de l'événement");
     }
   };
+  useEffect(() => {
+    const token = localStorage.getItem('userToken');
+    const userId = localStorage.getItem('userId');
+
+    if (!isOrganizer && event._id && userId) {
+      fetch(`http://localhost:5000/api/invitations/event/${event._id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+        .then(res => res.json())
+        .then(invitations => {
+          const match = invitations.find(inv => inv.id_utilisateur === userId);
+          if (match) setInvitationId(match._id);
+        })
+        .catch(err => console.error("❌ Failed to fetch invitation ID", err));
+    }
+  }, [event._id, isOrganizer]);
 
   return (
     <div className="modal-overlay" onClick={onClose}>
@@ -133,22 +153,32 @@ const EventDetails = ({ event, onClose, onEdit, onDelete }) => {
           </div>
 
           <div className="invite-box">
-            <div className="invite-header">
-              <button className='invite-button' disabled={!editing} onClick={() => setShowInviteModal(true)}>+ Invite other people</button>
-            </div>
-            {showInviteModal && (
-              <InvitePeopleModal onClose={() => setShowInviteModal(false)} onInvite={handleInvite} />
-            )}
-            {editedEvent.invitees.map((person, index) => (
-              <div className="invitee" key={index}>
-                <div className="person-info">
-                  <div className="name">{person.nom || 'Inconnu'} {person.prenom || ''}</div>
-                  <div className="email">{person.email}</div>
-                  {editing && <span className="delete-btn" onClick={() => handleRemove(index)}>×</span>}
-                </div>
-              </div>
-            ))}
-          </div>
+  <div className="invite-header">
+    {editing && (
+      <button className="invite-button" onClick={() => setShowInviteModal(true)}>+ Invite other people</button>
+    )}
+  </div>
+
+  {showInviteModal && (
+    <InvitePeopleModal onClose={() => setShowInviteModal(false)} onInvite={handleInvite} />
+  )}
+
+  {editedEvent.invitees.length === 0 ? (
+    <p className="no-invitees">Aucun invité pour cet événement.</p>
+  ) : (
+    editedEvent.invitees.map((person, index) => (
+      <div className="invitee" key={index}>
+        <div className="person-info">
+          <div className="name">{person.nom || 'Inconnu'} {person.prenom || ''}</div>
+          <div className="email">{person.email}</div>
+          {editing && <span className="delete-btn" onClick={() => handleRemove(index)}>×</span>}
+        </div>
+      </div>
+    ))
+  )}
+</div>
+
+
         </div>
 
         <div className="row">
@@ -198,27 +228,55 @@ const EventDetails = ({ event, onClose, onEdit, onDelete }) => {
           {!editing ? (
             <>
               <button className="cancel-btn" onClick={onClose}>Close</button>
-              <button className="save-btn" onClick={() => setEditing(true)}>Edit</button>
+
+              {isOrganizer ? (
+                <button className="save-btn" onClick={() => setEditing(true)}>Edit</button>
+              ) : (
+                <button className="cancel-btn" onClick={async () => {
+                  if (window.confirm('Retirer cet événement de votre calendrier ?')) {
+                    try {
+                      const token = localStorage.getItem('userToken');
+                      await fetch(`http://localhost:5000/api/invitations/${invitationId}/decline`, {
+                        method: 'POST',
+                        headers: { Authorization: `Bearer ${token}` }
+                      });
+                      alert("Événement retiré.");
+                      onDelete();
+                      onClose();
+                    } catch (err) {
+                      console.error(err);
+                      alert("Erreur lors du retrait.");
+                    }
+                  }
+                }}>
+                  Retirer l'événement
+                </button>
+
+              )}
+
             </>
           ) : (
             <>
               <button className="cancel-btn" onClick={() => setEditing(false)}>Cancel</button>
-              <button className="save-btn" onClick={handleSave}>Save</button>
-              <button className="cancel-btn" onClick={async () => {
-                if (window.confirm('Are you sure you want to delete this event?')) {
-                  try {
-                    await deleteEvent(event._id);
-                    alert('Event deleted successfully!');
-                    onDelete();
-                    onClose();
-                  } catch (err) {
-                    console.error('Error deleting event:', err);
-                    alert('Failed to delete event');
+              <button className="save-btn" onClick={handleSave} disabled={!isOrganizer}>Save</button>
+              {isOrganizer && (
+                <button className="cancel-btn" onClick={async () => {
+                  if (window.confirm('Are you sure you want to delete this event?')) {
+                    try {
+                      await deleteEvent(event._id);
+                      alert('Event deleted successfully!');
+                      onDelete();
+                      onClose();
+                    } catch (err) {
+                      console.error('Error deleting event:', err);
+                      alert('Failed to delete event');
+                    }
                   }
-                }
-              }}>Delete</button>
+                }}>Delete</button>
+              )}
             </>
           )}
+
         </div>
       </div>
     </div>

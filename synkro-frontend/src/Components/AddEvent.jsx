@@ -32,6 +32,7 @@ const AddEvent = ({ onClose, onSave }) => {
   const handleRemove = (indexToRemove) => {
     setPeopleList(prev => prev.filter((_, i) => i !== indexToRemove));
   };
+  
 
   const handleSave = async () => {
     const newEvent = {
@@ -51,6 +52,13 @@ const AddEvent = ({ onClose, onSave }) => {
 
 
     try {
+      const currentUserEmail = localStorage.getItem("userEmail"); // Add this at top of file if not already
+
+      const cleanedInvitees = peopleList.filter(inv => inv.email !== currentUserEmail);
+      newEvent.invitees = cleanedInvitees;
+
+      console.log("✅ Final invitees:", cleanedInvitees);
+
       const createdEvent = await createEvent(newEvent);
       alert('Événement ajouté !');
       onSave(createdEvent); // Send event to Calendar

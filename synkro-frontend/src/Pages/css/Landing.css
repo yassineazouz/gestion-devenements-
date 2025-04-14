@@ -1,0 +1,84 @@
+.landing-container {
+    font-family: 'Poppins', sans-serif;
+    background: #f9f9f9;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .landing-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 2rem 3rem;
+    background: white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  }
+  
+  .logo {
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: #1e2d3b;
+  }
+  
+  .nav-links a {
+    margin-left: 2rem;
+    text-decoration: none;
+    color: #1e2d3b;
+    font-weight: 500;
+  }
+  
+  .login-button {
+    padding: 0.5rem 1rem;
+    border: 1px solid #1e2d3b;
+    border-radius: 8px;
+    transition: 0.2s;
+  }
+  
+  .login-button:hover {
+    background: #1e2d3b;
+    color: white;
+  }
+  
+  .landing-main {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 3rem;
+    flex: 1;
+  }
+  
+  .text-content h1 {
+    font-size: 2.8rem;
+    line-height: 1.2;
+    color: #1e2d3b;
+    margin-bottom: 1rem;
+  }
+  
+  .text-content p {
+    font-size: 1.1rem;
+    color: #555;
+    margin-bottom: 2rem;
+  }
+  
+  .cta-buttons a {
+    margin-right: 1.5rem;
+    text-decoration: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: bold;
+  }
+  
+  .get-started {
+    background-color: #1e2d3b;
+    color: white;
+  }
+  
+  .watch-video {
+    color: #1e2d3b;
+  }
+  
+  .illustration img {
+    max-width: 400px;
+    width: 100%;
+  }

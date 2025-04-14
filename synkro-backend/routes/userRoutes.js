@@ -1,5 +1,5 @@
 const express = require("express");
-const { registerUser, loginUser, getUserProfile } = require("../controllers/userController");
+const { registerUser, loginUser, getUserProfile, forgotPassword, resetPassword } = require("../controllers/userController");
 const { protect } = require("../middleware/authMiddleware");
 const Invitation = require("../models/Invitation");
 const User = require("../models/User");
@@ -21,4 +21,9 @@ router.get("/:id/invitations", async (req, res) => {
       res.status(500).json({ message: "Erreur serveur" });
     }
   });
+  // routes/userRoutes.js
+  router.post('/forgot-password', forgotPassword);
+  router.post('/reset-password/:token', resetPassword);
+  
+
 module.exports = router;

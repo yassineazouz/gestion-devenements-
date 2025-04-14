@@ -10,7 +10,29 @@ const transporter = nodemailer.createTransport({
         pass: process.env.EMAIL_PASS
     }
 });
-
+const getUserInvitations = async (req, res) => {
+    const userId = req.params.id;
+  
+    try {
+      const invitations = await Invitation.find({ id_utilisateur: userId });
+  
+      // Manually fetch the event info for each invitation
+      const enrichedInvitations = await Promise.all(
+        invitations.map(async (inv) => {
+          const event = await Event.findById(inv.evenement).select('titre nom prenom');
+          return {
+            ...inv.toObject(),
+            evenement: event  // replace ID with full event info
+          };
+        })
+      );
+  
+      res.json(enrichedInvitations);
+    } catch (err) {
+      console.error("Erreur lors de la récupération des invitations:", err);
+      res.status(500).json({ message: "Erreur serveur" });
+    }
+  };
 const sendInvitation = async (req, res) => {
     const { email, eventId } = req.body;
 
@@ -23,7 +45,7 @@ const sendInvitation = async (req, res) => {
         const invitation = new Invitation({
             destinataire: email,
             evenement: eventId,
-            statut: "en_attente",
+            statut: "envoyée",
             id_utilisateur: existingUser?._id || null
         });
 
@@ -60,7 +82,14 @@ const acceptInvitation = async (req, res) => {
         if (!invitation) return res.status(404).send("Invitation non trouvée");
 
         invitation.statut = "acceptée";
+
+        // If invitation was sent before user registered
+        if (!invitation.id_utilisateur && req.user) {
+            invitation.id_utilisateur = req.user._id;
+        }
+
         await invitation.save();
+
 
         const event = await Event.findById(invitation.evenement);
         if (!event) return res.status(404).send("Événement introuvable");
@@ -154,17 +183,53 @@ const getInvitationsByEvent = async (req, res) => {
 const getInvitationsByEmail = async (req, res) => {
     try {
         const email = req.params.email;
-        const invitations = await Invitation.find({ destinataire: email });
+        const invitations = await Invitation.find({ destinataire: email }).populate({
+            path: 'evenement',
+            select: 'titre nom prenom'
+          });
+          
         res.json(invitations);
     } catch (err) {
         res.status(500).json({ message: "Erreur lors de la récupération des invitations." });
     }
 };
 
+const removeInvitationById = async (req, res) => {
+    try {
+      const invitation = await Invitation.findById(req.params.id).populate("id_utilisateur");
+  
+      if (!invitation) {
+        return res.status(404).json({ message: "Invitation non trouvée" });
+      }
+  
+      const event = await Event.findById(invitation.evenement);
+      if (!event) {
+        return res.status(404).json({ message: "Événement introuvable" });
+      }
+  
+      // Remove from invitees list
+      if (invitation.id_utilisateur) {
+        event.invitees = event.invitees.filter(
+          (inv) => inv.email !== invitation.id_utilisateur.email
+        );
+        await event.save();
+      }
+  
+      await Invitation.findByIdAndDelete(req.params.id);
+      res.status(200).json({ message: "Invitation supprimée avec succès." });
+    } catch (err) {
+      console.error("Erreur lors de la suppression de l'invitation", err);
+      res.status(500).json({ message: "Erreur serveur." });
+    }
+  };
+  
+  
 module.exports = {
     sendInvitation,
     acceptInvitation,
     declineInvitation,
     getInvitationsByEvent,
-    getInvitationsByEmail
+    getInvitationsByEmail,
+    removeInvitationById,
+    getUserInvitations
 };

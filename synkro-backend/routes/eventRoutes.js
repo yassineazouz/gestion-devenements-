@@ -12,7 +12,7 @@ const { protect } = require("../middleware/authMiddleware"); // 🛡️
 
 router.post("/", protect, createEvent);
 router.get("/", protect, getAllEvents);
-router.get("/:id", protect, getEventById);
+router.get("/:id", getEventById);
 router.put("/:id", protect, updateEvent);
 router.delete("/:id", protect, deleteEvent);
 

@@ -18,11 +18,10 @@ const UserMenu = ({ userName, onLogout, onAddEvent, onSettings, onProfile, onClo
     <div className="user-menu" ref={menuRef}>
       <div className="user-menu-header">
         <span className="user-name">{userName}</span>
-        <button className="close-btn" onClick={onClose}>×</button>
+        <h2 className="close-btn01" onClick={onClose}>×</h2>
       </div>
       <button onClick={onProfile}>Profil</button>
       <button onClick={onAddEvent}>Ajouter un événement</button>
-      <button onClick={onSettings}>Paramètres</button>
       <button className="notif-btn" onClick={onOpenNotifications}>
         Notifications {invitations.length > 0 && <span className="notif-count">{invitations.length}</span>}
       </button>

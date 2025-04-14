@@ -28,14 +28,22 @@ const createEvent = async (req, res) => {
 
     for (const invitee of invitees) {
       const user = await User.findOne({ email: invitee.email });
-
+      console.log(`Inviting ${invitee.email} | User exists: ${!!user}`);
+      if (user && user._id.toString() === organisateur.toString()) {
+        console.log(`⚠️ Skipping self-invitation for ${user.email}`);
+        continue;
+      }
+      
       const invitation = new Invitation({
         evenement: event._id,
         id_utilisateur: user?._id || null,
+        destinataire: invitee.email,
         statut: "envoyée"
       });
+      
 
       await invitation.save();
+      console.log("Received invitations:", invitation);
 
       if (user) {
         user.invitations.push(invitation._id);
@@ -65,6 +73,7 @@ const createEvent = async (req, res) => {
 };
 const getAllEvents = async (req, res) => {
   try {
+    console.log("getAllEvents called by:", req.user?._id);
     const userId = req.user._id;
 
     const acceptedInvitations = await Invitation.find({
@@ -95,13 +104,15 @@ const getAllEvents = async (req, res) => {
 const getEventById = async (req, res) => {
   try {
     const event = await Event.findById(req.params.id).populate("organisateur", "nom email");
+
     if (!event) return res.status(404).json({ message: "Événement non trouvé" });
 
-    res.json(event);
+    res.json(event); // ✅ This should include nom & prenom
   } catch (error) {
     res.status(500).json({ message: "Erreur lors de la récupération de l’événement" });
   }
 };
+
 
 const updateEvent = async (req, res) => {
   try {

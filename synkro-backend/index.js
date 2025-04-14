@@ -22,7 +22,6 @@ app.use((req, res, next) => {
   });
   
 app.use("/api/users", userRoutes);
-app.use("/api/users", require("./routes/userRoutes"));
 app.use("/api/invitations", invitationRoutes);
 app.use("/api/presences", presenceRoutes);
 app.use("/api/events", eventRoutes);

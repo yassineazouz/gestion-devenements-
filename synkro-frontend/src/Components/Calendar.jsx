@@ -14,7 +14,23 @@ const Calendar = ({ currentDate, setCurrentDate, onAddEventClick, onEventClick, 
   const [showMenu, setShowMenu] = useState(false);
   const [showNotifWindow, setShowNotifWindow] = useState(false);
   const [invitations, setInvitations] = useState([]);
-
+  const notifWindowRef = useRef(null);
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (notifWindowRef.current && !notifWindowRef.current.contains(e.target)) {
+        setShowNotifWindow(false);
+      }
+    };
+  
+    if (showNotifWindow) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+  
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showNotifWindow]);
+  
   const handleLogout = () => {
     localStorage.clear();
     window.location.reload();
@@ -37,29 +53,37 @@ const Calendar = ({ currentDate, setCurrentDate, onAddEventClick, onEventClick, 
     if (userId) {
       axios
         .get(`http://localhost:5000/api/users/${userId}/invitations`)
-        .then(res => setInvitations(res.data))
+        .then(res => {
+          const pending = res.data.filter(inv => inv.statut === 'envoyée');
+          setInvitations(pending);
+        })
         .catch(err => console.error("Failed to fetch invitations:", err));
+
+
     }
   }, [userId]);
   const handleAccept = async (id) => {
     try {
       await axios.post(`http://localhost:5000/api/invitations/${id}/accept`);
-      await onRefreshEvents();     // refresh events
-      await loadInvitations();     // refresh invitations
+      await onRefreshEvents();
+      await loadInvitations();
+      setShowNotifWindow(false); // 👈 close after accepting
     } catch (e) {
       console.error('Accept failed', e);
     }
   };
-
+  
   const handleDecline = async (id) => {
     try {
       await axios.post(`http://localhost:5000/api/invitations/${id}/decline`);
-      await onRefreshEvents();     // refresh events
-      await loadInvitations();     // refresh invitations
+      await onRefreshEvents();
+      await loadInvitations();
+      setShowNotifWindow(false); // 👈 close after declining
     } catch (e) {
       console.error('Decline failed', e);
     }
   };
+  
 
 
   useLayoutEffect(() => {
@@ -139,12 +163,54 @@ const Calendar = ({ currentDate, setCurrentDate, onAddEventClick, onEventClick, 
     setCurrentDate(date);
     setViewMode('week');
   };
+  useEffect(() => {
+    const fetchInvitationsWithEventDetails = async () => {
+      if (!userId) return;
+  
+      try {
+        const res = await axios.get(`http://localhost:5000/api/users/${userId}/invitations`);
+        const invitations = res.data;
+  
+        // Fetch the event details for each invitation
+        const detailedInvitations = await Promise.all(
+          invitations.map(async (inv) => {
+            try {
+              const token = localStorage.getItem("token");
+              const eventRes = await axios.get(`http://localhost:5000/api/events/${inv.evenement}`, {
+                headers: {
+                  Authorization: `Bearer ${token}`
+                }
+              });
+                            return {
+                ...inv,
+                evenement: eventRes.data // replace ID with full object
+              };
+            } catch (e) {
+              console.error("Failed to fetch event details for invitation", inv._id);
+              return inv;
+            }
+          })
+        );
+  
+        const pending = detailedInvitations.filter(inv => inv.statut === 'envoyée');
+        setInvitations(pending);
+      } catch (err) {
+        console.error("Failed to fetch invitations:", err);
+      }
+    };
+  
+    fetchInvitationsWithEventDetails();
+  }, [userId]);
+  
 
   const weekDays = getWeekDays();
   const monthDays = getMonthDays();
   const currentMonth = currentDate.getMonth();
   const todayStr = new Date().toDateString();
   const timezoneOffset = -new Date().getTimezoneOffset() / 60;
+  const [userNom, setUserNom] = useState(localStorage.getItem("userNom") || "");
+  const [userPrenom, setUserPrenom] = useState(localStorage.getItem("userPrenom") || "");
+  
 
   return (
     <div className="calendar-container">
@@ -171,32 +237,37 @@ const Calendar = ({ currentDate, setCurrentDate, onAddEventClick, onEventClick, 
 
           {showMenu && (
             <UserMenu
-              userName="John Doe"
+              userName={`${userPrenom} ${userNom}`}
               onAddEvent={onAddEventClick}
               onLogout={handleLogout}
               onClose={() => setShowMenu(false)}
               invitations={invitations}
               onOpenNotifications={() => setShowNotifWindow(true)}
             />
+
           )}
         </div>
       </div>
 
       {showNotifWindow && (
-        <div className="notif-window">
+        <div className="notif-window" ref={notifWindowRef}>
           <div className="notif-header">
-            <h3>Invitations reçues</h3>
-            <button className="notif-close" onClick={() => setShowNotifWindow(false)}>×</button>
+            <h3 className='notif-title'>Invitations reçues</h3>
+            <h2 className="notif-close close-btn01" onClick={() => setShowNotifWindow(false)}>×</h2>
           </div>
           <ul className="notif-list">
             {invitations.length === 0 ? (
-              <p>Aucune invitation</p>
+              <p className='no-invite'>Aucune invitation</p>
             ) : (
               invitations.map(inv => (
                 <li key={inv._id} className="notif-item">
-                  <p>Événement ID : {inv.evenement}</p>
-                  <button onClick={() => handleAccept(inv._id)}>Accepter</button>
-                  <button onClick={() => handleDecline(inv._id)}>Refuser</button>
+                  <p className='invitation'>
+                    Vous êtes invité à {inv.evenement?.titre} par {inv.evenement?.nom} {inv.evenement?.prenom}
+                  </p>
+                  <div className='invite-buttons'><button onClick={() => handleAccept(inv._id)} className='invite-desc'>Accepter</button>
+                    <button className='invite-desc' onClick={() => handleDecline(inv._id)}
+                    >Refuser</button></div>
+
                 </li>
               ))
             )}
