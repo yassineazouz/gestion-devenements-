@@ -29,32 +29,33 @@ const createEvent = async (req, res) => {
     for (const invitee of invitees) {
       const user = await User.findOne({ email: invitee.email });
       console.log(`Inviting ${invitee.email} | User exists: ${!!user}`);
+      
       if (user && user._id.toString() === organisateur.toString()) {
         console.log(`⚠️ Skipping self-invitation for ${user.email}`);
         continue;
       }
-      
+    
       const invitation = new Invitation({
         evenement: event._id,
         id_utilisateur: user?._id || null,
         destinataire: invitee.email,
         statut: "envoyée"
       });
-      
-
+    
       await invitation.save();
-      console.log("Received invitations:", invitation);
-
+      console.log("📨 Invitation object saved for:", invitee.email);
+    
       if (user) {
         user.invitations.push(invitation._id);
         await user.save();
       }
-
-      await transporter.sendMail({
-        from: process.env.EMAIL_USER,
-        to: invitee.email,
-        subject: `Invitation à l'événement : ${titre}`,
-        html: `
+    
+      try {
+        await transporter.sendMail({
+          from: process.env.EMAIL_USER,
+          to: invitee.email,
+          subject: `Invitation à l'événement : ${titre}`,
+          html: `
             <p>Bonjour,</p>
             <p>Vous êtes invité à <strong>${titre}</strong></p>
             <p><strong>Lieu:</strong> ${lieu}<br />
@@ -62,9 +63,14 @@ const createEvent = async (req, res) => {
             <strong>Heure:</strong> ${heure}</p>
             <p><a href="http://localhost:3000">Voir l'événement</a></p>
           `
-      });
+        });
+        console.log("✅ Email sent to:", invitee.email);
+      } catch (mailErr) {
+        console.error("❌ Failed to send email to:", invitee.email, mailErr);
+      }
     }
-
+    
+    
     res.status(201).json(event);
   } catch (error) {
     console.error(error);
